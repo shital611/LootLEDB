@@ -6,25 +6,19 @@ const connectDatabase = require('./db/conn.js')
 const dotenv = require('dotenv')
 const bodyparser = require('body-parser')
 const Admin = require('./models/adminSchema')
-const urlSchema = require('./models/urlSchema')
-
-const fs = require('fs');
-const multer = require('multer');
-
+const poolSchema = require('./models/urlSchema')
+const usersData=require('./models/users')
+const Participants=require('./models/participants')
+const winnerHistoryData=require('./models/winnerHistory')
 const upload_file = require('./helpers/image_helper.js')
-
-
 dotenv.config();
 connectDatabase();
 app.use(bodyparser.urlencoded({
     extended: true
 }));
-
 app.use(express.static('./assets/videos')); 
-
 app.use(bodyparser.json());
 const PORT = process.env.PORT || 3000
-
 const static_path = path.join(__dirname, '../public')
 const template_path = path.join(__dirname, '../templates/views')
 const partials_path = path.join(__dirname, '../templates/partials')
@@ -42,37 +36,6 @@ app.use(session({
     resave: false,
     saveUninitialized: true
 }));
-
-
-// app.get('/',(req,res) => {
-//     // res.redirect('/login')
-
-//     res.send(req.file.filename)
-// })
-
-
-// app.get('/register',(req,res) => {
-//     const data = new Admin({
-//         // email : "admin@admin.com",
-//         // password : "123456"
-//         email : "user@admin.com",
-//         password : "456789"
-//     })
-
-//     data.save().then((result) => {
-//         res.send(result)
-//     }).catch((err) => {
-//         console.log(err)
-//     })
-// })
-
-// app.get('/getalllink', async (req, res) => {
-//     Admin.find().then((result) => {
-//         res.send(result)
-//     }).catch((err) => {
-//         console.log(err)
-//     })
-// })
 app.get('/logout',async(req,res) => {
     res.render('login')
 })
@@ -90,14 +53,7 @@ app.post('/login',async(req,res) => {
     
     if(adminemail.password === password){
         req.session.user = req.body.email;
-        // if(req.session.user){
-        //     // console.log(req.session.user)        
-        // }else{
-        //     res.send("Unauthorize User")
-        // }
         res.render('index', {user : req.session.user})    
-        // res.status(201).redirect('/getvideos')
-        // res.end("Login Successful")
     }
     else{
         res.send("Invalid login details")
@@ -111,60 +67,10 @@ app.get('/addpool',async(req,res) => {
     res.render('add')
 })
 
-// app.post('/addvideo',upload_file.single(' '), async(req,res) => {
-
-//     try {
-//         console.log(req.file)
-//         var url = new urlSchema()
-//         url.sr_no = req.body.sr_no
-//         url.url_title = req.body.url_title
-//         url.url_desc = req.body.url_desc
-//         url.video_file = req.file.filename;
-        
-//         console.log(url)
-//         await url.save((err,data) => {
-//             if(!err)
-//             {
-//                 // res.render('index', {
-//                 //     list: data
-//                 // });
-
-//                 res.redirect('/getvideos')
-//             }
-//             else
-//                 console.log(err)
-//         })
-        
-//         } catch (error) {
-//             res.status(400).send(error.message)
-//        }
-// })
-
-
-// app.post('/addvideo',upload_file.single('video'),function (req,res){
-//     //fileSave();
-//     // console.log(req.file);
-//     var data = new urlSchema();
- 
-//     data.sr_no = req.body.sr_no;
-//     data.url_link = req.body.url_link;
-//     data.url_desc = req.body.url_desc;
-//    data.video_file = req.file.filename;
-//     // data.video_file = req.file.files;
-//     var save = data.save();
-       
-//     if (save)
-//        res.redirect('/');
-//     else
-//     console.log('Error during record insertion : ' + err);  
-//    });
-   
-
-   
 app.post('/addpool',upload_file.single('Hemper1'),function (req,res){
     //fileSave();
     // console.log(req.file);
-    var data = new urlSchema();
+    var data = new poolSchema();
  
     data.PoolID = req.body.PoolID;
     data.PoolName = req.body.PoolName;
@@ -178,9 +84,6 @@ app.post('/addpool',upload_file.single('Hemper1'),function (req,res){
    data.CoinsNeededToParticipate = req.body.CoinsNeededToParticipate;
    data.PoolStartDate = req.body.PoolStartDate;
    data.PoolEndDate = req.body.PoolEndDate;
-
-
-    // data.video_file = req.file.files;
     var save = data.save();
        
     if (save)
@@ -190,18 +93,93 @@ app.post('/addpool',upload_file.single('Hemper1'),function (req,res){
    });
    
 
+   
+
+   //----------------------------------------using fields--------------------------------------------------------------
+
+   /*
+   app.post('/addpool', upload_file.fields([
+    {
+        name:'Hemper1',maxCount: 1
+    },
+    {
+        name:'Hemper2',maxCount:1
+    },
+    {
+        name:'Hemper3',maxCount:1
+    }
+]),function (req,res){
+    //fileSave();
+    // console.log(req.file);
+    var data = new poolSchema();
+ 
+    data.PoolID = req.body.PoolID;
+    data.PoolName = req.body.PoolName;
+    data.Hemper1 = req.file.Hemper1[0];
+   data.Hemper1Worth = req.body.Hemper1Worth;
+   data.Hemper2 = req.file.Hemper2[0];
+   data.Hemper2Worth = req.body.Hemper2Worth;
+   data.Hemper3 = req.file.Hemper3[0];
+   data.Hemper3Worth = req.body.Hemper3Worth;
+   data.CoinsNeededToParticipate = req.body.CoinsNeededToParticipate;
+   data.PoolStartDate = req.body.PoolStartDate;
+   data.PoolEndDate = req.body.PoolEndDate;
+   var save = data.save(PoolID,PoolName,Hemper1.filename,Hemper1Worth,Hemper2.filename,Hemper2Worth,Hemper3.filename,Hemper3Worth,CoinsNeededToParticipate,PoolStartDate,PoolEndDate);
+       
+    if (save)
+       res.redirect('/getpool');
+    else
+    console.log('Error during record insertion : ' + err);  
+   });
+
+   */
+   
+//----------------------------------------finish using fields--------------------------------------------------------------
+
+// app.post('/addpool',upload_file(req, res, (err) => 
+//     {
+//         if (err) 
+//         {
+//             console.log(err);
+//         } else 
+//         {
+//             if (req.file == "undefined") 
+//             {
+//                 console.log("No image selected!")
+//             } 
+//             else 
+//             {
+//             //fileSave();
+//             // console.log(req.file);
+//             var data = new poolSchema();
+ 
+//             data.PoolID = req.body.PoolID;
+//             data.PoolName = req.body.PoolName;
+//             // data.url_desc = req.body.url_desc;
+//             data.Hemper1 = req.file.filename;
+//             data.Hemper1Worth = req.body.Hemper1Worth;
+//             data.Hemper2 = req.file.filename;
+//             data.Hemper2Worth = req.body.Hemper2Worth;
+//             data.Hemper3 = req.file.filename;
+//             data.Hemper3Worth = req.body.Hemper3Worth;
+//             data.CoinsNeededToParticipate = req.body.CoinsNeededToParticipate;
+//             data.PoolStartDate = req.body.PoolStartDate;
+//             data.PoolEndDate = req.body.PoolEndDate;
+//             var save = data.save();
+       
+//             if (save)
+//                 res.redirect('/getpool');
+//             else
+//                 console.log('Error during record insertion : ' + err);  
+//             }
+//         }
+//     }
+//     )
+//    );
+
 // Dsiplay Data 
 app.get('/getpool', async(req,res) => {
-
-    // if(req.session.user){
-    //     res.render('index', {user : req.session.user})
-
-        
-    // }else{
-    //     res.send("Unauthorize User")
-    // }
-
-    urlSchema.find((err, data) => {
+    poolSchema.find((err, data) => {
         if (!err) {
             res.render('index', {
                 list: data
@@ -218,7 +196,7 @@ app.get('/getpool', async(req,res) => {
 
 // To show select data on update element on edit.hbs page
  app.get('/updatepool/:id', async(req, res) => {
-    urlSchema.findById({_id:req.params.id},req.body, { new: true },(err,docs)=>{
+    poolSchema.findById({_id:req.params.id},req.body, { new: true },(err,docs)=>{
         console.log(docs)
        if(err)
        {
@@ -234,7 +212,7 @@ app.get('/getpool', async(req,res) => {
  // Now Update Data here using ID
 app.post('/updatepool/:id',async(req,res)=>{
     console.log(req.body)
-      urlSchema.findByIdAndUpdate({_id:req.params.id},req.body,(err,docs)=>{
+    poolSchema.findByIdAndUpdate({_id:req.params.id},req.body,(err,docs)=>{
           if(err)
           {
               console.log('Error');
@@ -249,39 +227,16 @@ app.post('/updatepool/:id',async(req,res)=>{
 // Delete data
 app.get('/deletepool/:id', async (req, res) => {
     var uid = req.params.id
-    urlSchema.findByIdAndRemove(uid, (err, doc) => {
+    poolSchema.findByIdAndRemove(uid, (err, doc) => {
         if (!err) {
             res.redirect('/getpool');
         }
         else { console.log('Error in video delete :' + err); }
     });
 });
-
-
-/*app.post('/addlink', async (req, res) => {
-    const data = new urlSchema({
-        sr_no : 1,
-        url_link : "https://youtu.be/jcOKU9f86XE",
-        url_desc: "software testing"
-    })
-
-    const data = new urlSchema()
-    data.sr_no = req.body.sr_no
-    data.url_link = req.body.url_link
-    data.url_desc = req.body.url_desc
-
-
-    data.save().then((result) => {
-        res.send(result)
-    }).catch((err) => {
-        console.log(err)
-    })
-})*/
-
-
 // api to get all videos
-app.get('/getallpool', async (req, res) => {
-    urlSchema.find().then((result) => {
+app.get('/GetAllPools', async (req, res) => {
+    poolSchema.find().then((result) => {
         res.json(result)
 
 
@@ -291,6 +246,60 @@ app.get('/getallpool', async (req, res) => {
 })
 
 
+//GetParticularPoolDetail
+
+app.get('/GetParticularPoolDetail/:id', async (req, res) => {
+    try {
+        const _id = req.params.id
+        const getUsers = await poolSchema.findById(_id)
+        res.send(getUsers)
+    } catch (e) {
+        res.status(400).send(e)
+    }
+
+})
+
 app.listen(PORT,()=>{
     console.log(`server is running on ${PORT}`)
 })
+
+//get user detail
+app.get('/GetUserDetail',async (req,res)=>{
+    try{
+     const getUsers=await usersData.find({}).sort({"UserID":1})
+     res.status(201).send(getUsers)
+    }catch(e){
+         res.status(400).send(e)
+    }
+    
+ })
+
+
+ //get user detail by id
+ app.get('/GetUserDetail/:id',async (req,res)=>{
+    try{
+    const _id=req.params.id
+    const getUsers=await usersData.findById(_id)
+    res.send(getUsers)
+    }catch(e){
+         res.status(400).send(e)
+    }
+    
+ })
+
+ app.delete('/GetUserDetail/:id',async (req,res)=>{
+    try{
+    const _id=req.params.id
+    const getUsers=await usersData.findById(_id)
+    res.send(getUsers)
+    }catch(e){
+         res.status(400).send(e)
+    }
+    
+ })
+
+//http://localhost:3000/GetAllPools
+//http://localhost:3000/GetParticularPoolDetail/62eb6976abda91f5300b3c30
+//http://localhost:3000/GetUserDetail
+//http://localhost:3000/GetParticularPoolDetail/62eb6976abda91f5300b3c30
+

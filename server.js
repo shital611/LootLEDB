@@ -10,6 +10,14 @@ app.use(bodyparser.json());
 
 const PORT = process.env.PORT || 3000;
 
+// if (process.env.NODE_ENV === 'production') {
+// 	app.use(express.static(path.join(__dirname, 'admin/build')));
+
+// 	app.use('*', (req, res) =>
+// 		res.sendFile(path.resolve(__dirname, 'admin', 'build', 'server.js'))
+// 	);
+// }
+
 app.use('/admin/login',require('./Routes/loginRoute'))
 
 app.get('/', (req,res) => {
