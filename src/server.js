@@ -63,9 +63,14 @@ app.post('/login',async(req,res) => {
    }
 })
 
+app.get('/adduser',async(req,res) => {
+    res.render('add')
+})
+
 app.get('/addpool',async(req,res) => {
     res.render('add')
 })
+
 
 app.post('/addpool',upload_file.single('Hemper1'),function (req,res){
     //fileSave();
@@ -93,6 +98,28 @@ app.post('/addpool',upload_file.single('Hemper1'),function (req,res){
    });
    
 
+
+   app.post('/adduser',upload_file.single('Profile_Pic'),function (req,res){
+    //fileSave();
+    // console.log(req.file);
+    var data = new usersData();
+ 
+    data.UserID = req.body.UserID;
+    data.Name = req.body.Name;
+   data.ProfilePic = req.file.filename;
+   data.Hemper1Worth = req.body.Hemper1Worth;
+   data.PhoneNo = req.body.PhoneNo;
+   data.Address = req.body.Address;
+   data.Coins = req.body.Coins;
+   data.OTP = req.body.OTP;
+   data.CreatedDate = req.body.CreatedDate;
+    var save = data.save();
+       
+    if (save)
+       res.redirect('/getuser');
+    else
+    console.log('Error during record insertion : ' + err);  
+   });
    
 
    //----------------------------------------using fields--------------------------------------------------------------
@@ -193,6 +220,18 @@ app.get('/getpool', async(req,res) => {
     
 })
 
+app.get('/getuser', async(req,res) => {
+    usersData.find((err, data1) => {
+        if (!err) {
+            res.render('index1', {
+                list1: data1
+            });
+        }
+        else {
+            console.log('Error in retrieving url list :' + err);
+        }
+    })    
+})
 
 // To show select data on update element on edit.hbs page
  app.get('/updatepool/:id', async(req, res) => {
@@ -208,9 +247,24 @@ app.get('/getpool', async(req,res) => {
        }
     })
  });
+
+ app.get('/updateuser/:id', async(req, res) => {
+    usersData.findById({_id:req.params.id},req.body, { new: true },(err,docs)=>{
+        console.log(docs)
+       if(err)
+       {
+           console.log('Cant retrieve data and edit');
+       }
+       else
+       {
+           res.render('edit',{urldata:docs});
+       }
+    })
+ });
+  
   
  // Now Update Data here using ID
-app.post('/updatepool/:id',async(req,res)=>{
+app.post('/updateuser/:id',async(req,res)=>{
     console.log(req.body)
     poolSchema.findByIdAndUpdate({_id:req.params.id},req.body,(err,docs)=>{
           if(err)
@@ -219,7 +273,7 @@ app.post('/updatepool/:id',async(req,res)=>{
           }  
           else
           {  
-              res.redirect('/getpool');
+              res.redirect('/getuser');
           }
       });
 });
@@ -234,8 +288,28 @@ app.get('/deletepool/:id', async (req, res) => {
         else { console.log('Error in video delete :' + err); }
     });
 });
+
+app.get('/deleteuser/:id', async (req, res) => {
+    var uid = req.params.id
+    usersData.findByIdAndRemove(uid, (err, doc) => {
+        if (!err) {
+            res.redirect('/getuser');
+        }
+        else { console.log('Error in video delete :' + err); }
+    });
+});
 // api to get all videos
 app.get('/GetAllPools', async (req, res) => {
+    poolSchema.find().then((result) => {
+        res.json(result)
+
+
+    }).catch((err) => {
+        console.log(err)
+    })
+})
+
+app.get('/GetAlluser', async (req, res) => {
     poolSchema.find().then((result) => {
         res.json(result)
 
@@ -263,40 +337,44 @@ app.listen(PORT,()=>{
     console.log(`server is running on ${PORT}`)
 })
 
-//get user detail
-app.get('/GetUserDetail',async (req,res)=>{
-    try{
-     const getUsers=await usersData.find({}).sort({"UserID":1})
-     res.status(201).send(getUsers)
-    }catch(e){
-         res.status(400).send(e)
-    }
+// //get user detail
+// app.get('/GetUserDetail',async (req,res)=>{
+//     try{
+//      const getUsers=await usersData.find({}).sort({"UserID":1})
+//      res.status(201).send(getUsers)
+//     }catch(e){
+//          res.status(400).send(e)
+//     }
     
- })
+//  })
 
 
- //get user detail by id
- app.get('/GetUserDetail/:id',async (req,res)=>{
-    try{
-    const _id=req.params.id
-    const getUsers=await usersData.findById(_id)
-    res.send(getUsers)
-    }catch(e){
-         res.status(400).send(e)
-    }
-    
- })
 
- app.delete('/GetUserDetail/:id',async (req,res)=>{
-    try{
-    const _id=req.params.id
-    const getUsers=await usersData.findById(_id)
-    res.send(getUsers)
-    }catch(e){
-         res.status(400).send(e)
-    }
+//  //get user detail by id
+//  app.get('/GetUserDetail/:id',async (req,res)=>{
+//     try{
+//     const _id=req.params.id
+//     const getUsers=await usersData.findById(_id)
+//     res.send(getUsers)
+//     }catch(e){
+//          res.status(400).send(e)
+//     }
     
- })
+//  })
+
+ 
+
+//  app.delete('/GetUserDetail/:id',async (req,res)=>{
+//     try{
+//     const _id=req.params.id
+//     const getUsers=await usersData.findById(_id)
+//     res.send(getUsers)
+//     }catch(e){
+//          res.status(400).send(e)
+//     }
+    
+//  })
+
 
 //http://localhost:3000/GetAllPools
 //http://localhost:3000/GetParticularPoolDetail/62eb6976abda91f5300b3c30
